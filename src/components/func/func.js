@@ -18,47 +18,50 @@ function array_move(arr, old_index, new_index) {
   return arr; // for testing
 };
 
-const saveSettings = () => new Promise((resolve, reject) => {
-  console.log('[func.js] Saving settings');
-  tableau.extensions.settings.set('metaVersion', 2);
-  console.log('[func.js] Authoring mode', tableau.extensions.environment.mode);
-  if (tableau.extensions.environment.mode === "authoring") {
-    tableau.extensions.settings.saveAsync()
-    .then(newSavedSettings => {
-      //console.log('[func.js] newSavedSettings', newSavedSettings);
-      resolve(newSavedSettings);
-    }).catch(reject);
-  } else {
-    resolve();
-  }
-  
-});
+function saveSettings() {
+  return new Promise(function (resolve, reject) {
+            console.log('[func.js] Saving settings');
+            tableau.extensions.settings.set('metaVersion', 2);
+            console.log('[func.js] Authoring mode', tableau.extensions.environment.mode);
+            if (tableau.extensions.environment.mode === "authoring") {
+              tableau.extensions.settings.saveAsync().then(newSavedSettings => {
+                  //console.log('[func.js] newSavedSettings', newSavedSettings);
+                  resolve(newSavedSettings);
+                }).catch(reject);
+            } else {
+              resolve();
+            }
 
-const setSettings = (type, value) => new Promise((resolve, reject) => {
-  console.log('[func.js] Set settings', type, value);
-  let settingKey = '';
-  switch(type) {
-    case 'sheets':
-      settingKey = 'selectedSheets';
-      break;
-    case 'label':
-      settingKey = 'buttonLabel';
-      break;
-    case 'style':
-      settingKey = 'buttonStyle';
-      break;
-    case 'filename':
-      settingKey = 'filename';
-      break;
-    case 'version':
-      settingKey = 'metaVersion';
-      break;
-    default:
-      settingKey = 'unknown';
-  }
-  tableau.extensions.settings.set(settingKey, JSON.stringify(value));
-  resolve();
-});
+    });
+}
+
+function setSettings(type, value) {
+  return new Promise((resolve, reject) => {
+    console.log('[func.js] Set settings', type, value);
+    let settingKey = '';
+    switch (type) {
+      case 'sheets':
+        settingKey = 'selectedSheets';
+        break;
+      case 'label':
+        settingKey = 'buttonLabel';
+        break;
+      case 'style':
+        settingKey = 'buttonStyle';
+        break;
+      case 'filename':
+        settingKey = 'filename';
+        break;
+      case 'version':
+        settingKey = 'metaVersion';
+        break;
+      default:
+        settingKey = 'unknown';
+    }
+    tableau.extensions.settings.set(settingKey, JSON.stringify(value));
+    resolve();
+  });
+}
 
 const getSheetColumns = (sheet, existingCols, modified) => new Promise((resolve, reject) => {
   sheet.getSummaryDataAsync({ignoreSelection: true}).then((data) => {
@@ -136,16 +139,18 @@ const initializeMeta = () => new Promise((resolve, reject) => {
 
   console.log(`[func.js] Found ${meta.length} sheets`, meta);
 
-  Promise.all(promises).then((sheetArr) => {
-    for (var i = 0; i < sheetArr.length; i++) {
-      var sheetMeta = meta[i];
-      sheetMeta.columns = sheetArr[i];
-      meta[i] = sheetMeta;
-      console.log(`[func.js] Added ${sheetArr[i].length} columns to ${sheetMeta.sheetName}`, meta);
+  Promise.all(promises).then(
+      function(sheetArr) {
+        for(var i = 0; i < sheetArr.length; i++) {
+          var sheetMeta = meta[i];
+          sheetMeta.columns = sheetArr[i];
+          meta[i] = sheetMeta;
+          console.log(`[func.js] Added ${sheetArr[i].length} columns to ${sheetMeta.sheetName}`, meta);
+        }
+        //console.log(`[func.js] Meta initialised`, meta);
+      resolve(meta);
     }
-    //console.log(`[func.js] Meta initialised`, meta);
-    resolve(meta);
-  });
+    );
 });
 
 const revalidateMeta = (existing) => new Promise((resolve, reject) => {
